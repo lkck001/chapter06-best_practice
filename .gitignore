@@ -1,0 +1,35 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+
+
+
+# Specific data folders and files
+data/test/
+data/test1/
+data/train/
+test1.zip
+train.zip
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+
+# Environment
+venv/
+env/
+.env
+
+# Logs
+*.log
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Jupyter Notebook
+.ipynb_checkpoints 
