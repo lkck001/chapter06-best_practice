@@ -24,13 +24,14 @@ class BasicModule(t.nn.Module):
 
     def save(self, name=None):
         """
-        保存模型，默认使用"模型名字+时间"作为文件名
+        Save model with Kaggle working directory path
         """
-        # Create checkpoints directory if it doesn't exist
-        os.makedirs('checkpoints', exist_ok=True)
+        # Use Kaggle working directory
+        checkpoint_dir = '/kaggle/working/checkpoints'
+        os.makedirs(checkpoint_dir, exist_ok=True)
         
         if name is None:
-            prefix = 'checkpoints/' + self.model_name + '_'
+            prefix = os.path.join(checkpoint_dir, self.model_name + '_')
             name = time.strftime(prefix + '%m%d_%H:%M:%S.pth')
         t.save(self.state_dict(), name)
         return name

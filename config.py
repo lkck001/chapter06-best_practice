@@ -26,6 +26,8 @@ class DefaultConfig(object):
     lr_decay = 0.5  # when val_loss increase, lr = lr*lr_decay
     weight_decay = 0e-5  # L2 regularization
 
+    checkpoint_dir = '/kaggle/working/checkpoints'  # Add this line
+
     def _parse(self, kwargs):
         """
         Update config parameters according to kwargs

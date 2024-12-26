@@ -79,8 +79,8 @@ def write_csv(results, file_name):
 def train(**kwargs):
     opt.parse(kwargs)
     
-    # Create checkpoints directory
-    os.makedirs('checkpoints', exist_ok=True)
+    # Create checkpoints directory with full Kaggle path
+    os.makedirs('/kaggle/working/checkpoints', exist_ok=True)
 
     # Only create visualizer if use_visdom is True
     vis = Visualizer(opt.env, port=opt.vis_port) if opt.use_visdom else None
