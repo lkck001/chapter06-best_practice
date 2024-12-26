@@ -3,7 +3,7 @@ from config import opt
 import os
 import torch as t
 import models
-from data.dataset import DogCat
+from data.dataset import DogCatDataset, get_dataloader
 from torch.utils.data import DataLoader
 from torchnet import meter
 from utils.visualize import Visualizer
@@ -90,14 +90,7 @@ def train(**kwargs):
     model.to(opt.device)
 
     # step2: data
-    train_data = DogCat(opt.train_data_root, train=True)
-    val_data = DogCat(opt.train_data_root, train=False)
-    train_dataloader = DataLoader(
-        train_data, opt.batch_size, shuffle=True, num_workers=opt.num_workers
-    )
-    val_dataloader = DataLoader(
-        val_data, opt.batch_size, shuffle=False, num_workers=opt.num_workers
-    )
+    train_dataloader, test_dataloader = get_dataloader(opt)
 
     # step3: criterion and optimizer
     criterion = t.nn.CrossEntropyLoss()
@@ -118,19 +111,19 @@ def train(**kwargs):
         for ii, (data, label) in tqdm(enumerate(train_dataloader)):
 
             # train model
-            input = data.to(opt.device)
-            target = label.to(opt.device)
+            data = data.to(opt.device)
+            label = label.to(opt.device)
 
             optimizer.zero_grad()
-            score = model(input)
-            loss = criterion(score, target)
+            score = model(data)
+            loss = criterion(score, label)
             loss.backward()
             optimizer.step()
 
             # meters update and visualize
             loss_meter.add(loss.item())
             # detach 一下更安全保险
-            confusion_matrix.add(score.detach(), target.detach())
+            confusion_matrix.add(score.detach(), label.detach())
 
             if (ii + 1) % opt.print_freq == 0:
                 # Only plot if visdom is enabled
@@ -148,7 +141,7 @@ def train(**kwargs):
         model.save()
 
         # validate and visualize
-        val_cm, val_accuracy = val(model, val_dataloader)
+        val_cm, val_accuracy = val(model, test_dataloader)
 
         # Only use visdom if enabled
         if vis:

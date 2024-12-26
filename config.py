@@ -6,10 +6,11 @@ class DefaultConfig(object):
     env = 'default'  # visdom environment
     vis_port = 8097  # visdom port
     model = 'SqueezeNet'  # use the model from models directory
+    use_visdom = False  # whether to use visdom for visualization
 
     # Data paths
-    train_data_root = '/kaggle/input/cat-and-dog/training_set'  # root path for training data
-    test_data_root = '/kaggle/input/cat-and-dog/test_set'      # root path for test data
+    train_data_root = 'C:/Users/Administrator/Downloads/archive/training_set/training_set'  # root path for training data
+    test_data_root = 'C:/Users/Administrator/Downloads/archive/test_set/test_set'      # root path for test data
     load_model_path = None  # load pre-trained model path
     
     batch_size = 256  # batch size
