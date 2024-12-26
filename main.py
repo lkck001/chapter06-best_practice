@@ -5,7 +5,6 @@ import torch as t
 import models
 from data.dataset import DogCatDataset, get_dataloader
 from torch.utils.data import DataLoader
-from torchnet import meter
 from utils.visualize import Visualizer
 from tqdm import tqdm
 
@@ -79,6 +78,9 @@ def write_csv(results, file_name):
 
 def train(**kwargs):
     opt.parse(kwargs)
+    
+    # Create checkpoints directory
+    os.makedirs('checkpoints', exist_ok=True)
 
     # Only create visualizer if use_visdom is True
     vis = Visualizer(opt.env, port=opt.vis_port) if opt.use_visdom else None
@@ -98,8 +100,8 @@ def train(**kwargs):
     optimizer = model.get_optimizer(lr, opt.weight_decay)
 
     # step4: meters
-    loss_meter = meter.AverageValueMeter()
-    confusion_matrix = meter.ConfusionMeter(2)
+    loss_meter = AverageMeter()
+    confusion_matrix = AverageMeter()
     previous_loss = 1e10
 
     # train
@@ -177,7 +179,7 @@ def val(model, dataloader):
     计算模型在验证集上的准确率等信息
     """
     model.eval()
-    confusion_matrix = meter.ConfusionMeter(2)
+    confusion_matrix = AverageMeter()
     for ii, (val_input, label) in tqdm(enumerate(dataloader)):
         val_input = val_input.to(opt.device)
         score = model(val_input)
@@ -217,3 +219,21 @@ if __name__ == "__main__":
     import fire
 
     fire.Fire()
+
+
+class AverageMeter(object):
+    """Computes and stores the average and current value"""
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.val = 0
+        self.avg = 0
+        self.sum = 0
+        self.count = 0
+
+    def add(self, val, n=1):
+        self.val = val
+        self.sum += val * n
+        self.count += n
+        self.avg = self.sum / self.count
