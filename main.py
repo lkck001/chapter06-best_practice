@@ -15,7 +15,6 @@ def test(**kwargs):
 
     # Configure paths for Kaggle environment
     checkpoint_dir = '/kaggle/working/checkpoints'
-    
     # List available models in checkpoints directory
     if os.path.exists(checkpoint_dir):
         models_available = [f for f in os.listdir(checkpoint_dir) if f.endswith('.pth')]
@@ -212,6 +211,7 @@ def val(model, dataloader):
     cm_value = confusion_matrix.value()
     accuracy = 100.0 * (cm_value[0][0] + cm_value[1][1]) / (cm_value.sum())
     return confusion_matrix, accuracy
+
 
 
 def help():

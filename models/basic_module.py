@@ -2,8 +2,6 @@
 import torch as t
 import time
 import os
-from config import opt  # Import config to get checkpoint directory
-import tempfile
 
 
 class BasicModule(t.nn.Module):
@@ -26,15 +24,15 @@ class BasicModule(t.nn.Module):
 
     def save(self, name=None):
         """
-        Save model in temporary directory
+        Save model with Kaggle working directory path
         """
-        # Create temp directory
-        temp_dir = tempfile.gettempdir()
-        os.makedirs(temp_dir, exist_ok=True)
+        # Use Kaggle working directory
+        checkpoint_dir = '/kaggle/working/checkpoints'
+        os.makedirs(checkpoint_dir, exist_ok=True)
         
         if name is None:
-            name = os.path.join(temp_dir, f'model_{time.strftime("%m%d_%H%M%S")}.pth')
-        
+            prefix = os.path.join(checkpoint_dir, self.model_name + '_')
+            name = time.strftime(prefix + '%m%d_%H:%M:%S.pth')
         t.save(self.state_dict(), name)
         return name
 
