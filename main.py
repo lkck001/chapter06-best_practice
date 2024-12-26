@@ -13,67 +13,90 @@ from tqdm import tqdm
 def test(**kwargs):
     opt.parse(kwargs)
 
-    # Create test directory if it doesn't exist
-    os.makedirs(opt.test_data_root, exist_ok=True)
+    # Configure paths for Kaggle environment
+    checkpoint_dir = '/kaggle/working/checkpoints'
+    
+    # List available models in checkpoints directory
+    if os.path.exists(checkpoint_dir):
+        models_available = [f for f in os.listdir(checkpoint_dir) if f.endswith('.pth')]
+        if not models_available:
+            raise FileNotFoundError(f"No model files found in {checkpoint_dir}")
+        print("Available models:")
+        for i, model_file in enumerate(models_available):
+            print(f"{i}: {model_file}")
+        
+        # Use the latest model if not specified
+        if opt.load_model_path is None:
+            opt.load_model_path = os.path.join(checkpoint_dir, models_available[-1])
+            print(f"\nUsing latest model: {opt.load_model_path}")
+    else:
+        raise FileNotFoundError(f"Checkpoint directory {checkpoint_dir} not found")
 
-    if not os.path.exists(opt.test_data_root):
-        raise FileNotFoundError(
-            f"Test data directory {opt.test_data_root} does not exist. Please create it and add test images."
-        )
-
-    if len(os.listdir(opt.test_data_root)) == 0:
-        raise FileNotFoundError(
-            f"Test data directory {opt.test_data_root} is empty. Please add test images."
-        )
-
-    # configure model
+    # Configure model
     model = getattr(models, opt.model)().eval()
-
-    # Check if model path exists
-    if opt.load_model_path is None or not os.path.exists(opt.load_model_path):
-        print(f"Model file {opt.load_model_path} not found.")
-        print("Please train the model first using:")
-        print(
-            "python main.py train --train-data-root=./data/train --use-gpu=False --env=classifier"
-        )
+    
+    try:
+        model.load(opt.load_model_path)
+        print(f"Successfully loaded model from {opt.load_model_path}")
+    except Exception as e:
+        print(f"Error loading model: {str(e)}")
         return
-
-    model.load(opt.load_model_path)
+    
     model.to(opt.device)
 
-    # data
-    train_data = DogCat(opt.test_data_root, test=True)
+    # Configure test data
+    if not os.path.exists(opt.test_data_root):
+        raise FileNotFoundError(
+            f"Test data directory {opt.test_data_root} does not exist. Please set correct test_data_root path."
+        )
+
+    # Create results directory
+    results_dir = '/kaggle/working/results'
+    os.makedirs(results_dir, exist_ok=True)
+    opt.result_file = os.path.join(results_dir, 'result.csv')
+
+    # Load and process test data
+    from data.dataset import DogCat  # Import here to avoid circular import
+    test_data = DogCat(opt.test_data_root, test=True)
     test_dataloader = DataLoader(
-        train_data,
+        test_data,
         batch_size=opt.batch_size,
         shuffle=False,
         num_workers=opt.num_workers,
     )
+
+    # Run inference
     results = []
+    print("\nRunning inference on test data...")
     for ii, (data, path) in tqdm(enumerate(test_dataloader)):
-        input = data.to(opt.device)
-        score = model(input)
+        input_data = data.to(opt.device)
+        score = model(input_data)
         probability = t.nn.functional.softmax(score, dim=1)[:, 0].detach().tolist()
-        # label = score.max(dim = 1)[1].detach().tolist()
 
         batch_results = [
             (path_.item(), probability_)
             for path_, probability_ in zip(path, probability)
         ]
-
         results += batch_results
+
+    # Save results
     write_csv(results, opt.result_file)
+    print(f"\nResults saved to {opt.result_file}")
 
     return results
 
 
 def write_csv(results, file_name):
     import csv
-
-    with open(file_name, "w") as f:
-        writer = csv.writer(f)
-        writer.writerow(["id", "label"])
-        writer.writerows(results)
+    
+    try:
+        with open(file_name, "w") as f:
+            writer = csv.writer(f)
+            writer.writerow(["id", "label"])
+            writer.writerows(results)
+        print(f"Successfully wrote {len(results)} results to {file_name}")
+    except Exception as e:
+        print(f"Error writing results: {str(e)}")
 
 
 def train(**kwargs):
