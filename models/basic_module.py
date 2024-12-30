@@ -19,7 +19,6 @@ class BasicModule(t.nn.Module):
         """
         if not os.path.exists(path):
             raise FileNotFoundError(f"Model file {path} not found")
-        
         self.load_state_dict(t.load(path, weights_only=True))
 
     def save(self, name=None):
